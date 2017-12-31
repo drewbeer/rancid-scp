@@ -2,7 +2,7 @@
 
 Generic rancid support for pulling configs via scp, should work on anything.
 
-# forked from https://github.com/schweikert/fnrancid-scp
+forked from https://github.com/schweikert/fnrancid-scp
 
 License: Free as in beer
 
