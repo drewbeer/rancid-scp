@@ -1,0 +1,51 @@
+#!/bin/sh
+
+# Copy a devices configuration via SCP and store it with rancid. should work on anything
+#
+# Writted by David Schweikert, 2016-11-03
+# rewritten by DrewBeer to make it generic and work with any username, and config
+#
+# License: same as rancid version 3 (BSD-style)
+#
+# Note: for this to work you need to enable scp on the device in question.
+
+
+ARG_HOST=$1
+ARG_FILE="$ARG_HOST.new"
+
+usage() {
+    echo "usage: /usr/local/libexec/rancid/rancid-scp hostname" 2>&1
+    exit 1
+}
+
+# this assumes that:
+# 1. the host can be matched without wildcards in the .cloginrc file
+# 2. the password is enclosed in curly braces
+get_password() {
+    PASSWORD=`perl -ne "/^add\\s+password\\s+\\Q$1\\E\\s+{(.*)}/ and print \"\\\$1\"" $HOME/.cloginrc`
+}
+
+get_user() {
+    USER=`grep $1 $HOME/.cloginrc|grep user|sed 's/\s\+/ /g'|cut -d' ' -f4`
+}
+
+get_config_name() {
+    CONFIGNAME=`grep $1 $HOME/.cloginrc|grep config-name|sed 's/\s\+/ /g'|cut -d' ' -f4`
+}
+
+if [ -z "$ARG_HOST" ]; then
+    usage
+fi
+
+get_user $ARG_HOST
+
+get_password $ARG_HOST
+
+get_config_name $ARG_HOST
+
+expect -c "  
+   set timeout 10
+   spawn scp $USER@$ARG_HOST:$CONFIGNAME $ARG_FILE
+   expect password: { send \"$PASSWORD\n\" }
+   expect eof
+"
